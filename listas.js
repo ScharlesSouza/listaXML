@@ -5,53 +5,65 @@ function ajax(caminho,funcao) {
     xhttp.send();
 }
 let doc;
+var botaoFiltro = document.getElementById("btfiltro");
 
 function iniciarConteudo()
 {
-    alert("readState: "+ this.readyState+", status: "+this.status);
     if(this.readyState==4&&this.status==200)
     {
         doc=this.responseXML;
         
-        mostrar();
+        mostrar("");
     }
 }
 
-function mostrar()
+botaoFiltro.onclick = function(){
+    let selecionado = document.getElementById("selectfiltro");
+    let textoSelecionado = selecionado.options[selecionado.selectedIndex].value;
+   
+    removerListaItens();
+    mostrar(textoSelecionado);   
+}
+
+function mostrar(parametroPesquisa)
 {
    let listas=doc.getElementsByTagName("lista");
    for(let lista of listas)
    {
-      
-            
-    var body = document.getElementById("body");
-    var artigo = document.createElement("article");
-    var cabecalho = document.createElement("header");
+        let pesquisa = document.getElementById("cxtexto");
+        let titulo = pegaTitulo(lista);
+        if(parametroPesquisa=="titulo" && titulo.toLowerCase().includes(pesquisa.value)){
+            gerarCorpoHTML(parametroPesquisa, lista, titulo);
+           
+        }else if(parametroPesquisa!="titulo"){
+            gerarCorpoHTML(parametroPesquisa, lista, titulo);
+        }
+    }
+}
 
-    var h1 = document.createElement("h1");
+function gerarCorpoHTML(parametroPesquisa, lista, titulo){
+    let body = document.getElementById("body");
+    let artigo = document.createElement("article");
+    let cabecalho = document.createElement("header");
+
+    let h1 = document.createElement("h1");
     h1.setAttribute("id","titulo");
 
-    var noTexto = document.createTextNode(pegaTitulo(lista));
+    let noTexto = document.createTextNode(titulo);
     h1.appendChild(noTexto);
     cabecalho.appendChild(h1);
     artigo.appendChild(cabecalho);
     body.appendChild(artigo);
 
-    var ulNaoFeito = document.createElement("ul");
+    let ulNaoFeito = document.createElement("ul");
     ulNaoFeito.setAttribute("id","listanaofeito");
-    var ulFeito = document.createElement("ul");
+    let ulFeito = document.createElement("ul");
     ulFeito.setAttribute("id","listafeito");
-   
+
     artigo.appendChild(ulNaoFeito);
     artigo.appendChild(ulFeito);
     
-           criaListaItens(lista,
-               //document.getElementById("listanaofeito"),
-               //document.getElementById("listafeito"),
-               ulNaoFeito, ulFeito
-           );
-       
-   }
+    criaListaItens(lista, ulNaoFeito, ulFeito, parametroPesquisa);
 }
 
 function pegaTitulo(lista)
@@ -59,7 +71,12 @@ function pegaTitulo(lista)
     return lista.getElementsByTagName("titulo")[0].firstChild.nodeValue;
 }
 
-function criaListaItens(lista,listaNaoFeito,listaFeito)
+function removerListaItens(){
+    let body = document.getElementById("body");
+    body.innerHTML='';
+}
+
+function criaListaItens(lista,listaNaoFeito,listaFeito, parametroPesquisa)
 {
     let itens=lista.getElementsByTagName("item");
     let textoNaoFeito="",textoFeito="";
@@ -73,7 +90,17 @@ function criaListaItens(lista,listaNaoFeito,listaFeito)
         else
             textoNaoFeito+=`<li>${texto}</li>`;
     }
-    listaFeito.innerHTML=textoFeito;
-    listaNaoFeito.innerHTML=textoNaoFeito;
+    if(parametroPesquisa==""){
+        listaFeito.innerHTML=textoFeito;
+        listaNaoFeito.innerHTML=textoNaoFeito;
+    }else if(parametroPesquisa=="feito"){
+        listaNaoFeito.innerHTML=textoNaoFeito;
+    }else if(parametroPesquisa=="naofeito"){
+        listaFeito.innerHTML=textoFeito;
+    }else{
+        listaFeito.innerHTML=textoFeito;
+        listaNaoFeito.innerHTML=textoNaoFeito;
+    }
+    
 }
 ajax("listas.xml",iniciarConteudo);
